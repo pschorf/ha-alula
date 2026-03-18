@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Alula",
+        "description": "Enter your Alula account credentials.",
+        "data": {
+          "username": "Email address",
+          "password": "Password",
+          "panel_id": "Panel ID (optional — leave blank if you only have one panel)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password.",
+      "cannot_connect": "Unable to connect to the Alula API. Check your network.",
+      "unknown": "An unexpected error occurred. Check the Home Assistant logs."
+    },
+    "abort": {
+      "already_configured": "This Alula account is already configured."
+    }
+  }
+}

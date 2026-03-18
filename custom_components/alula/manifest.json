@@ -1,0 +1,11 @@
+{
+  "domain": "alula",
+  "name": "Alula",
+  "version": "0.1.0",
+  "documentation": "https://github.com/youruser/ha-alula",
+  "requirements": ["aiohttp>=3.9.0"],
+  "dependencies": [],
+  "codeowners": [],
+  "iot_class": "cloud_polling",
+  "config_flow": true
+}

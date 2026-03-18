@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyalula"
+version = "0.1.0"
+description = "Python client library for the Alula alarm panel API"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mitmproxy",
+    "homeassistant",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyalula*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

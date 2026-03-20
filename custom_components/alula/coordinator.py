@@ -37,7 +37,11 @@ class AlulaCoordinator(DataUpdateCoordinator["AlarmPanel"]):
         )
         self._client = client
         self._panel_id = panel_id
-        self._ws_connected = False
+        self._client.on_arm_state_change = self._on_arm_state_change
+
+    def _on_arm_state_change(self) -> None:
+        """Called by the client when a keypad push indicates an arm state transition."""
+        self.hass.async_create_task(self.async_request_refresh())
 
     async def _async_update_data(self) -> "AlarmPanel":
         """Fetch fresh panel + zone data."""
@@ -46,9 +50,8 @@ class AlulaCoordinator(DataUpdateCoordinator["AlarmPanel"]):
             panel = await self._client.get_panel_status(panel_id=self._panel_id)
 
             # Ensure WebSocket is up (zone state + arm/disarm commands)
-            if not self._ws_connected:
+            if not self._client.ws_connected:
                 await self._client.connect_ws()
-                self._ws_connected = True
 
             # Refresh zone state via WebSocket
             zones = await self._client.fetch_zone_statuses(device_id=panel.id)
@@ -57,11 +60,8 @@ class AlulaCoordinator(DataUpdateCoordinator["AlarmPanel"]):
             return panel
 
         except AlulaAuthError as err:
-            self._ws_connected = False
             raise UpdateFailed(f"Alula authentication failed: {err}") from err
         except AlulaApiError as err:
-            self._ws_connected = False
             raise UpdateFailed(f"Alula API error: {err}") from err
         except Exception as err:
-            self._ws_connected = False
             raise UpdateFailed(f"Unexpected error: {err}") from err

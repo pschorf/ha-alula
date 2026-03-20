@@ -3,7 +3,7 @@
   "name": "Alula",
   "version": "0.1.0",
   "documentation": "https://github.com/youruser/ha-alula",
-  "requirements": ["aiohttp>=3.9.0"],
+  "requirements": [],
   "dependencies": [],
   "codeowners": [],
   "iot_class": "cloud_polling",

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ArmState(str, Enum):
@@ -90,7 +93,10 @@ class AlarmPanel:
     def from_api(cls, data: dict, zones: list[Zone] | None = None) -> AlarmPanel:
         """Parse panel from REST GET /rest/v1/devices response data item."""
         attrs = data.get("attributes", data)
-        arm_state = ArmState.from_api(attrs.get("armingLevel", "disarm"))
+        raw_arming = attrs.get("armingLevel", "disarm")
+        _LOGGER.debug("REST armingLevel raw value: %r", raw_arming)
+        arm_state = ArmState.from_api(raw_arming)
+        _LOGGER.debug("REST arm_state parsed: %s", arm_state)
         return cls(
             id=str(data.get("id", "")),
             name=attrs.get("friendlyName", "Alula Panel"),

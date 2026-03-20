@@ -57,8 +57,10 @@ class AlulaConfigFlow(ConfigFlow, domain=DOMAIN):
             except Exception:
                 _LOGGER.exception("Unexpected error during Alula login")
                 errors["base"] = "unknown"
-            else:
+            finally:
                 await client.close()
+
+            if not errors:
                 data = {
                     CONF_USERNAME: username,
                     CONF_PASSWORD: password,
@@ -66,9 +68,6 @@ class AlulaConfigFlow(ConfigFlow, domain=DOMAIN):
                 if panel_id:
                     data[CONF_PANEL_ID] = panel_id
                 return self.async_create_entry(title=f"Alula ({username})", data=data)
-            finally:
-                if errors:
-                    await client.close()
 
         return self.async_show_form(
             step_id="user",

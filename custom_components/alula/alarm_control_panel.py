@@ -7,6 +7,7 @@ import logging
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature,
+    AlarmControlPanelState,
     CodeFormat,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -25,25 +26,14 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-# Map Alula ArmState → HA alarm state strings
-_STATE_MAP: dict["ArmState", str] = {}  # filled after imports resolve at runtime
-
-
-def _build_state_map() -> dict:
-    from homeassistant.const import (
-        STATE_ALARM_ARMED_AWAY,
-        STATE_ALARM_ARMED_HOME,
-        STATE_ALARM_ARMED_NIGHT,
-        STATE_ALARM_DISARMED,
-        STATE_ALARM_TRIGGERED,
-    )
-    return {
-        ArmState.DISARMED: STATE_ALARM_DISARMED,
-        ArmState.ARMED_AWAY: STATE_ALARM_ARMED_AWAY,
-        ArmState.ARMED_HOME: STATE_ALARM_ARMED_HOME,
-        ArmState.ARMED_NIGHT: STATE_ALARM_ARMED_NIGHT,
-        ArmState.TRIGGERED: STATE_ALARM_TRIGGERED,
-    }
+# Map Alula ArmState → HA AlarmControlPanelState
+_STATE_MAP: dict["ArmState", AlarmControlPanelState] = {
+    ArmState.DISARMED: AlarmControlPanelState.DISARMED,
+    ArmState.ARMED_AWAY: AlarmControlPanelState.ARMED_AWAY,
+    ArmState.ARMED_HOME: AlarmControlPanelState.ARMED_HOME,
+    ArmState.ARMED_NIGHT: AlarmControlPanelState.ARMED_NIGHT,
+    ArmState.TRIGGERED: AlarmControlPanelState.TRIGGERED,
+}
 
 
 async def async_setup_entry(
@@ -80,7 +70,6 @@ class AlulaAlarmPanel(CoordinatorEntity[AlulaCoordinator], AlarmControlPanelEnti
         super().__init__(coordinator)
         self._client = client
         self._entry = entry
-        self._state_map = _build_state_map()
 
     @property
     def unique_id(self) -> str:
@@ -97,10 +86,10 @@ class AlulaAlarmPanel(CoordinatorEntity[AlulaCoordinator], AlarmControlPanelEnti
         )
 
     @property
-    def alarm_state(self) -> str | None:
+    def alarm_state(self) -> AlarmControlPanelState | None:
         if self.coordinator.data is None:
             return None
-        return self._state_map.get(self.coordinator.data.arm_state)
+        return _STATE_MAP.get(self.coordinator.data.arm_state)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         if not code:

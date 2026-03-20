@@ -3,18 +3,23 @@
     "step": {
       "user": {
         "title": "Connect to Alula",
-        "description": "Enter your Alula account credentials.",
+        "description": "Sign in with your Alula account to control your alarm panel.",
         "data": {
-          "username": "Email address",
+          "username": "Email",
           "password": "Password",
-          "panel_id": "Panel ID (optional — leave blank if you only have one panel)"
+          "panel_id": "Panel ID"
+        },
+        "data_description": {
+          "username": "The email address you use to sign in to the Alula app.",
+          "password": "Your Alula account password.",
+          "panel_id": "Optional. Only needed if your account has multiple panels. You can find this in the Alula app under device settings."
         }
       }
     },
     "error": {
-      "invalid_auth": "Invalid username or password.",
-      "cannot_connect": "Unable to connect to the Alula API. Check your network.",
-      "unknown": "An unexpected error occurred. Check the Home Assistant logs."
+      "invalid_auth": "Invalid email or password. Please check your credentials.",
+      "cannot_connect": "Could not connect to the Alula API. Please check your internet connection.",
+      "unknown": "An unexpected error occurred. Check the Home Assistant logs for details."
     },
     "abort": {
       "already_configured": "This Alula account is already configured."

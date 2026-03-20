@@ -116,6 +116,14 @@ class AlulaClient:
         # Panel id cache (filled after first get_panel_status)
         self._panel_id: str | None = None
 
+        # Optional callback fired when keypad indicates an arm state transition
+        self.on_arm_state_change: callable | None = None
+
+    @property
+    def ws_connected(self) -> bool:
+        """Whether the WebSocket is currently open."""
+        return self._ws is not None and not self._ws.closed
+
     # ------------------------------------------------------------------
     # Context manager
     # ------------------------------------------------------------------
@@ -429,21 +437,34 @@ class AlulaClient:
                 pass
 
     def _update_arm_state_from_keypad(self, kp: dict) -> None:
-        """Derive ArmState from a virtualKeypadOutput payload."""
+        """Derive ArmState from a virtualKeypadOutput payload.
+
+        The keypad ``stay`` flag does NOT indicate arming mode — it is always
+        False regardless of stay vs away.  So we only use the keypad for
+        disarmed / triggered transitions.  The specific armed-* mode comes
+        from the REST ``armingLevel`` field which is authoritative.
+        """
+        _LOGGER.debug("virtualKeypadOutput payload: %s", kp)
         armed = kp.get("armed", False)
-        stay = kp.get("stay", False)
         fire = kp.get("fire", False)
         alarmMemory = kp.get("alarmMemory", False)
 
+        prev = self._ws_arm_state
         if fire or alarmMemory:
             self._ws_arm_state = ArmState.TRIGGERED
         elif not armed:
             self._ws_arm_state = ArmState.DISARMED
-        elif stay:
-            self._ws_arm_state = ArmState.ARMED_HOME
         else:
-            self._ws_arm_state = ArmState.ARMED_AWAY
-        _LOGGER.debug("WS arm state → %s (kp=%s)", self._ws_arm_state, kp)
+            # Panel is armed but keypad doesn't tell us which mode —
+            # clear the WS override so REST armingLevel is used.
+            self._ws_arm_state = None
+            _LOGGER.debug("Keypad says armed, deferring to REST for mode")
+
+        if self._ws_arm_state != prev and self.on_arm_state_change:
+            _LOGGER.debug("Arm state changed (%s → %s), firing callback", prev, self._ws_arm_state)
+            self.on_arm_state_change()
+        elif self._ws_arm_state is not None:
+            _LOGGER.debug("WS arm state → %s", self._ws_arm_state)
 
     # ------------------------------------------------------------------
     # WebSocket: zone status request

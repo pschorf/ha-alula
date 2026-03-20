@@ -2,7 +2,7 @@
   "domain": "alula",
   "name": "Alula",
   "version": "0.1.0",
-  "documentation": "https://github.com/youruser/ha-alula",
+  "documentation": "https://github.com/pschorf/ha-alula",
   "requirements": ["pyalula==0.1.0"],
   "dependencies": [],
   "codeowners": [],

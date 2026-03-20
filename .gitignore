@@ -1,7 +1,10 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+dist/
+build/
 .venv/
 *.jsonl
 *.har
 *.log
+capture/

@@ -7,7 +7,8 @@ BASE_URL = "https://api.alula.net"
 WS_URL = "wss://api.alulaprod.com/ws/v1"
 
 # -------------------------------------------------------------------
-# OAuth2 — static client credentials embedded in the app
+# OAuth2 — static client credentials shipped in the Alula mobile app.
+# These are the same for all users and are not per-account secrets.
 # -------------------------------------------------------------------
 OAUTH_CLIENT_ID = "4ce837c4-08e2-11e7-aa3b-605718912297"
 OAUTH_CLIENT_SECRET = "Uzka3sgLNDTaH3cQ"

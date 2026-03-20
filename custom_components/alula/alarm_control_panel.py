@@ -35,7 +35,6 @@ def _build_state_map() -> dict:
         STATE_ALARM_ARMED_HOME,
         STATE_ALARM_ARMED_NIGHT,
         STATE_ALARM_DISARMED,
-        STATE_ALARM_PENDING,
         STATE_ALARM_TRIGGERED,
     )
     return {
@@ -43,7 +42,6 @@ def _build_state_map() -> dict:
         ArmState.ARMED_AWAY: STATE_ALARM_ARMED_AWAY,
         ArmState.ARMED_HOME: STATE_ALARM_ARMED_HOME,
         ArmState.ARMED_NIGHT: STATE_ALARM_ARMED_NIGHT,
-        ArmState.PENDING: STATE_ALARM_PENDING,
         ArmState.TRIGGERED: STATE_ALARM_TRIGGERED,
     }
 
@@ -105,7 +103,10 @@ class AlulaAlarmPanel(CoordinatorEntity[AlulaCoordinator], AlarmControlPanelEnti
         return self._state_map.get(self.coordinator.data.arm_state)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
-        await self._client.disarm()
+        if not code:
+            _LOGGER.error("Disarm requires a PIN code")
+            return
+        await self._client.disarm(pin=code)
         await self.coordinator.async_request_refresh()
 
     async def async_alarm_arm_away(self, code: str | None = None) -> None:

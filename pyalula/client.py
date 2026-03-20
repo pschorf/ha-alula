@@ -507,12 +507,35 @@ class AlulaClient:
             level, user_number, silent, no_entry_delay, device_id
         )
 
-    async def disarm(self, user_number: int = 0,
+    async def disarm(self, pin: str | list[str],
+                     silent: bool = False, no_entry_delay: bool = False,
                      device_id: str | None = None) -> None:
-        """Disarm the panel."""
-        await self._send_arming_level(
-            ARM_LEVEL_DISARM, user_number, False, False, device_id
-        )
+        """Disarm the panel.
+
+        :param pin: user PIN code as a string ('1234') or list of digit strings (['1','2','3','4'])
+        """
+        dev_id = device_id or self._panel_id
+        if not dev_id:
+            raise AlulaApiError("Panel ID unknown — call get_panel_status() first")
+
+        await self._ensure_ws()
+
+        pin_digits = list(pin) if isinstance(pin, str) else [str(d) for d in pin]
+
+        inner = {
+            "deviceId": dev_id,
+            "cmdrsp": "changeArmingLevelUsingCode",
+            "payload": {
+                "armingLevelValue": ARM_LEVEL_DISARM,
+                "armSilent": silent,
+                "noEntryDelay": no_entry_delay,
+                "pin": pin_digits,
+            },
+            "requestId": str(uuid.uuid4()),
+        }
+        msg = {"channel": WS_CHANNEL, "id": str(uuid.uuid4()), "send": inner}
+        await self._ws_send(msg)
+        _LOGGER.debug("Sent changeArmingLevelUsingCode (disarm) to panel %s", dev_id)
 
     async def _send_arming_level(
         self,

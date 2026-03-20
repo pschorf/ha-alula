@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "pyalula"
 version = "0.1.0"
 description = "Python client library for the Alula alarm panel API"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.9.0",

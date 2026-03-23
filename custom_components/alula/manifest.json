@@ -1,9 +1,9 @@
 {
   "domain": "alula",
   "name": "Alula",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "documentation": "https://github.com/pschorf/ha-alula",
-  "requirements": ["pyalula==0.1.0"],
+  "requirements": ["pyalula==0.1.1"],
   "dependencies": [],
   "codeowners": [],
   "iot_class": "cloud_polling",

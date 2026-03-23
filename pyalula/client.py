@@ -106,8 +106,8 @@ class AlulaClient:
         self._zones: dict[str, Zone] = {}  # keyed by zone index string (0-based)
         self._zone_configs: dict[str, dict] = {}  # zone config data keyed by index
 
-        # Latest arm state from virtualKeypadOutput push events
-        self._ws_arm_state: "ArmState | None" = None
+        # Previous keypad armed flag for transition detection
+        self._prev_keypad_armed: bool | None = None
 
         # Panel metadata from panelDefinition (populated during init)
         self._max_zones: int = 64
@@ -239,9 +239,6 @@ class AlulaClient:
         self._panel_id = str(panel_data["id"])
         zones = list(self._zones.values())
         panel = AlarmPanel.from_api(panel_data, zones=zones)
-        # Override with fresher WS push state if available
-        if self._ws_arm_state is not None:
-            panel.arm_state = self._ws_arm_state
         return panel
 
     # ------------------------------------------------------------------
@@ -437,34 +434,30 @@ class AlulaClient:
                 pass
 
     def _update_arm_state_from_keypad(self, kp: dict) -> None:
-        """Derive ArmState from a virtualKeypadOutput payload.
+        """Detect arm-state transitions from virtualKeypadOutput and request a REST refresh.
 
-        The keypad ``stay`` flag does NOT indicate arming mode — it is always
-        False regardless of stay vs away.  So we only use the keypad for
-        disarmed / triggered transitions.  The specific armed-* mode comes
-        from the REST ``armingLevel`` field which is authoritative.
+        The keypad push is NOT used as authoritative state — REST ``armingLevel``
+        is the sole source of truth.  We only watch for transitions (armed flag
+        changing, or triggered indicators) and fire the callback so the HA
+        coordinator triggers an immediate REST poll.
         """
         _LOGGER.debug("virtualKeypadOutput payload: %s", kp)
         armed = kp.get("armed", False)
         fire = kp.get("fire", False)
-        alarmMemory = kp.get("alarmMemory", False)
+        alarm_memory = kp.get("alarmMemory", False)
+        triggered = fire or alarm_memory
 
-        prev = self._ws_arm_state
-        if fire or alarmMemory:
-            self._ws_arm_state = ArmState.TRIGGERED
-        elif not armed:
-            self._ws_arm_state = ArmState.DISARMED
-        else:
-            # Panel is armed but keypad doesn't tell us which mode —
-            # clear the WS override so REST armingLevel is used.
-            self._ws_arm_state = None
-            _LOGGER.debug("Keypad says armed, deferring to REST for mode")
+        # Detect transitions only — fire callback so coordinator does a REST poll
+        prev = self._prev_keypad_armed
+        self._prev_keypad_armed = armed
 
-        if self._ws_arm_state != prev and self.on_arm_state_change:
-            _LOGGER.debug("Arm state changed (%s → %s), firing callback", prev, self._ws_arm_state)
-            self.on_arm_state_change()
-        elif self._ws_arm_state is not None:
-            _LOGGER.debug("WS arm state → %s", self._ws_arm_state)
+        if prev is not None and (armed != prev or triggered):
+            _LOGGER.debug(
+                "Keypad transition detected (armed: %s → %s, triggered: %s), requesting refresh",
+                prev, armed, triggered,
+            )
+            if self.on_arm_state_change:
+                self.on_arm_state_change()
 
     # ------------------------------------------------------------------
     # WebSocket: zone status request
